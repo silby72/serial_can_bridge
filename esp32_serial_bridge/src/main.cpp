@@ -17,6 +17,7 @@ Copyright (c) 2025 RRST-NHK-Project. All rights reserved.
 #include "robomas.hpp"
 #include "serial_task.hpp"
 #include <Arduino.h>
+#include "can_bridge.hpp"
 // ================= SETUP =================
 
 void setup() {
@@ -28,6 +29,12 @@ void setup() {
     delay(100 * DEVICE_ID); // 安定待ち, IDごとに開始タイミングをずらす
 
     pinMode(LED, OUTPUT);
+
+    if (!CanBridge::begin()) {
+        Serial.println("[CAN] initialization failed");
+    } else {
+        Serial.println("[CAN] initialization success");
+    }
 
     // ready
     for (int i = 0; i < DEVICE_ID; i++) {

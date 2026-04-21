@@ -42,6 +42,7 @@ Copyright (c) 2025 RRST-NHK-Project. All rights reserved.
 #include "defs.hpp"
 #include "frame_data.hpp"
 #include <Arduino.h>
+#include "can_bridge.hpp"
 
 #define START_BYTE 0xAA // ROS側と揃える，基本的に変更する必要はない，フレーム破損時の復帰に使用
 
@@ -90,7 +91,7 @@ void receive_frame();
 // ================= TASK =================
 
 // 送受信タスク
-void serialTask(void *) {
+void serialTask(void *pvParameters) {
     TickType_t last_tx = xTaskGetTickCount();
 
     while (1) {
@@ -234,6 +235,8 @@ void receive_frame() {
                         (int16_t)((rx_buf[i * 2] << 8) |
                                   rx_buf[i * 2 + 1]);
                 }
+
+                CanBridge::transmitSerialToCan();
 
 #if ENABLE_LOOPBACK
                 // ===== LOOPBACK =====

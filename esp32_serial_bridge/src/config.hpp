@@ -10,6 +10,10 @@ Copyright (c) 2025 RRST-NHK-Project. All rights reserved.
 
 // ================= 基本設定 =================
 
+// CANブリッジ設定（PC-マイコン間シリアルはそのまま、マイコン-アクチュエータ間をCAN化）
+#define CAN_BRIDGE_TX_PIN 4
+#define CAN_BRIDGE_RX_PIN 2
+
 // IDの設定，ROS側からマイコンを識別するために使用，すべてのマイコンで異なる値にすること
 #define DEVICE_ID 0x01
 
