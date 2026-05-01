@@ -113,6 +113,6 @@ void CanBridge::executeCanTransmit(uint32_t id, const uint8_t* data, uint8_t len
         message.data[i] = data[i];
     }
 
-    // 送信実行（タイムアウト1ms）
+    // 送信実行（タイムアウト1ms）(短いかもしれない)
     twai_transmit(&message, pdMS_TO_TICKS(1));
 }
