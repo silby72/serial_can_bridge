@@ -2,7 +2,11 @@
 #define CAN_BRIDGE_HPP
 
 #include <Arduino.h>
+#include <ESP32Servo.h>
 #include "driver/twai.h" // ESP-IDFのCAN(TWAI)ドライバ
+
+Servo servo1;
+Servo servo2;
 
 // 1. 受信データの構造定義（ボトムアップなメモリ管理の核）
 #pragma pack(1) // メモリの隙間（パディング）を詰め、バイナリと完全に一致させる
@@ -15,11 +19,13 @@ struct ControlPacket {
 #pragma pack()
 
 class CanBridge {
-public:
-    static bool begin(); // 初期化：S3のピン設定を含む[cite: 2]
-    static void processSerialBuffer(uint8_t* buf); // 解析：シリアルデータを処理
-private:
-    static void transmitCan(uint32_t id, uint8_t* data, uint8_t len); // 物理送信
+public: // ★ここから下は外（main.cpp）から見える
+    static bool begin();
+    static void transmitSerialToCan();
+    static void receiveAndDriveServos();
+    static void processSerialBuffer(uint8_t* buf);
+    static void transmitCan(uint32_t id, uint8_t* data, uint8_t len);
+
 };
 
 #endif

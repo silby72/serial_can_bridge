@@ -8,14 +8,16 @@ bool CanBridge::begin() {
         TWAI_MODE_NORMAL
     );
     twai_timing_config_t t_config = TWAI_TIMING_CONFIG_1MBITS(); // 1Mbps[cite: 2]
-    twai_filter_config_t f_config = TWAI_FILTER_CONFIG_ACCEPT_ALL();
+    twai_filter_config_t f_config = TWAI_FILTER_CONFIG_ACCEPT_ALL(); // フィルタなし
 
     if (twai_driver_install(&g_config, &t_config, &f_config) != ESP_OK) return false;
     if (twai_start() != ESP_OK) return false;
     return true;
 }
 
-// 配列の解析ロジック
+
+
+// 配列の解析
 void CanBridge::processSerialBuffer(uint8_t* buf) {
     // 2. 型キャスト：メモリの解釈をバイナリから構造体へ変える[cite: 1]
     ControlPacket* packet = (ControlPacket*)buf;
@@ -41,4 +43,25 @@ void CanBridge::transmitCan(uint32_t id, uint8_t* data, uint8_t len) {
     for (int i = 0; i < len; i++) msg.data[i] = data[i];
     
     twai_transmit(&msg, pdMS_TO_TICKS(1)); // タイムアウト1msで送信
+}
+
+void CanBridge::receiveAndDriveServos() {
+    twai_message_t msg;
+    if (twai_receive(&msg, 0) == ESP_OK) {
+
+
+        
+        // ID 0x201 をサーボ1、0x202 をサーボ2とする（識別）
+        if (msg.identifier == 0x201) {
+            int angle = msg.data[0]; // 1バイト目を角度として解釈
+            servo1.write(angle);      // 物理層（サーボ1）へ出力
+        } 
+        else if (msg.identifier == 0x202) {
+            int angle = msg.data[0];
+            servo2.write(angle);      // 物理層（サーボ2）へ出力
+        }
+    }
+}
+
+void CanBridge::transmitSerialToCan(){
 }

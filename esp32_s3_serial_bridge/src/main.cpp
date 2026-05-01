@@ -16,10 +16,15 @@ Copyright (c) 2025 RRST-NHK-Project. All rights reserved.
 #include "pin_ctrl_task.hpp"
 #include "robomas.hpp"
 #include "serial_task.hpp"
+#include "can_bridge.hpp"
 #include <Arduino.h>
 // ================= SETUP =================
 
 void setup() {
+
+    //以下勝手に追加
+    servo1.attach(15);
+    servo2.attach(13);
 
     // ボーレートは実機テストしながら調整する予定
     Serial.begin(115200);
@@ -170,6 +175,8 @@ void setup() {
 // ================= LOOP =================
 
 void loop() {
-    vTaskDelay(pdMS_TO_TICKS(1000));
+    CanBridge::transmitSerialToCan();
+    CanBridge::receiveAndDriveServos();
+    vTaskDelay(pdMS_TO_TICKS(100));
     // メインループはなにもしない、処理はすべてFreeRTOSタスクで行う
 }
