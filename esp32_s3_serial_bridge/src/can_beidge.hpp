@@ -1,0 +1,25 @@
+#ifndef CAN_BRIDGE_HPP
+#define CAN_BRIDGE_HPP
+
+#include <Arduino.h>
+#include "driver/twai.h" // ESP-IDFのCAN(TWAI)ドライバ
+
+// 1. 受信データの構造定義（ボトムアップなメモリ管理の核）
+#pragma pack(1) // メモリの隙間（パディング）を詰め、バイナリと完全に一致させる
+struct ControlPacket {
+    uint8_t  header;   // 識別：0xAA
+    uint8_t  id;       // 識別：デバイスID
+    int16_t  value;    // 本題：制御値（-32768〜32767）
+    uint8_t  checksum; // 安全：データの正しさ確認
+};
+#pragma pack()
+
+class CanBridge {
+public:
+    static bool begin(); // 初期化：S3のピン設定を含む[cite: 2]
+    static void processSerialBuffer(uint8_t* buf); // 解析：シリアルデータを処理
+private:
+    static void transmitCan(uint32_t id, uint8_t* data, uint8_t len); // 物理送信
+};
+
+#endif
