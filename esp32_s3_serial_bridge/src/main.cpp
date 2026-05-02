@@ -23,7 +23,9 @@ Copyright (c) 2025 RRST-NHK-Project. All rights reserved.
 void setup() {
 
     //以下勝手に追加
-    CanBridge::begin();
+    // 物理的な起動確認
+    pinMode(2, OUTPUT); // ESP32の内蔵LED（ピン番号は基板による）
+    digitalWrite(2, HIGH);
     //ここまで
 
     // ボーレートは実機テストしながら調整する予定
@@ -31,8 +33,21 @@ void setup() {
 
     delay(200);
     delay(100 * DEVICE_ID); // 安定待ち, IDごとに開始タイミングをずらす
+    Serial.println("--- System Boot Start ---");
 
     pinMode(LED, OUTPUT);
+
+    // CAN初期化[cite: 2]
+    if (CanBridge::begin()) {
+        Serial.println("CAN Init: SUCCESS");
+    } else {
+        Serial.println("CAN Init: FAILED");
+        // 失敗した場合はLEDを点滅させる
+        while(1) {
+            digitalWrite(2, !digitalRead(2));
+            delay(100);
+        }
+    }
 
     // ready
     for (int i = 0; i < 5; i++) {

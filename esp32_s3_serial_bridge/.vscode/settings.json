@@ -1,0 +1,13 @@
+{
+    "C_Cpp.default.includePath": [
+        "${workspaceFolder}/**",
+        "/opt/ros/humble/include",
+        "/home/ubuntu/serial_can_bridge/esp32_s3_serial_bridge/src/servo_test/include",
+        "/usr/include/c++/11",
+        "/usr/include/x86_64-linux-gnu/c++/11"
+    ],
+    "C_Cpp.default.defines": [
+        "_GNU_SOURCE"
+    ],
+    "C_Cpp.intelliSenseEngine": "default"
+}
