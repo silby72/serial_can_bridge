@@ -235,6 +235,13 @@ void receive_frame() {
                                   rx_buf[i * 2 + 1]);
                 }
 
+                // デバッグ出力: 受信した最初の2チャネルを表示
+                Serial.printf("RX OK id=0x%02X len=%d vals:", rx_id, rx_len);
+                for (int i = 0; i < rx_len / 2 && i < 4; i++) {
+                    Serial.printf(" %d", Rx_16Data[i]);
+                }
+                Serial.println();
+
 #if ENABLE_LOOPBACK
                 // ===== LOOPBACK =====
                 Serial.write(Rx_raw_frame, Rx_raw_len);

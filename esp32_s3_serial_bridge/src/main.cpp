@@ -23,8 +23,8 @@ Copyright (c) 2025 RRST-NHK-Project. All rights reserved.
 void setup() {
 
     //以下勝手に追加
-    servo1.attach(15);
-    servo2.attach(13);
+    CanBridge::begin();
+    //ここまで
 
     // ボーレートは実機テストしながら調整する予定
     Serial.begin(115200);
@@ -42,9 +42,15 @@ void setup() {
         delay(50);
     }
 
+    if (!CanBridge::begin()) {
+        Serial.println("CAN Init Failed!");
+        while (1);
+    }
+
     // ledcSetup(1, 20000, 8);
     // ledcAttachPin(LED, 1);
 
+#if defined(ROLE_MASTER)
     xTaskCreate(
         serialTask,   // タスク関数
         "serialTask", // タスク名
@@ -52,6 +58,7 @@ void setup() {
         NULL,
         10, // 優先度
         NULL);
+#endif
 
     // モードに応じた初期化
     // #if defined(MODE_OUTPUT)
@@ -175,8 +182,22 @@ void setup() {
 // ================= LOOP =================
 
 void loop() {
-    CanBridge::transmitSerialToCan();
-    CanBridge::receiveAndDriveServos();
-    vTaskDelay(pdMS_TO_TICKS(100));
+
+    vTaskDelay(pdMS_TO_TICKS(10));
     // メインループはなにもしない、処理はすべてFreeRTOSタスクで行う
+
+
+    #if defined(ROLE_MASTER)
+        // 2. CANへ流す
+        static uint32_t lastSend = 0;
+        if (millis() - lastSend > 20) { // 20ms周期で送信[cite: 5]
+            CanBridge::transmitSerialToCan();
+            lastSend = millis();
+        }
+
+    #elif defined(ROLE_SLAVE)
+        CanBridge::receiveAndDriveServos();
+    #endif
+
 }
+

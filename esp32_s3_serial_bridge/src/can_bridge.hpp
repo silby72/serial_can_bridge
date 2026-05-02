@@ -5,9 +5,6 @@
 #include <ESP32Servo.h>
 #include "driver/twai.h" // ESP-IDFのCAN(TWAI)ドライバ
 
-Servo servo1;
-Servo servo2;
-
 // 1. 受信データの構造定義（ボトムアップなメモリ管理の核）
 #pragma pack(1) // メモリの隙間（パディング）を詰め、バイナリと完全に一致させる
 struct ControlPacket {
@@ -25,6 +22,10 @@ public: // ★ここから下は外（main.cpp）から見える
     static void receiveAndDriveServos();
     static void processSerialBuffer(uint8_t* buf);
     static void transmitCan(uint32_t id, uint8_t* data, uint8_t len);
+    static void WAI_GENERAL_CONFIG_DEFAULT();
+
+    static Servo servo1; 
+    static Servo servo2;
 
 };
 

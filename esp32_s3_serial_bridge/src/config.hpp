@@ -19,6 +19,18 @@ Copyright (c) 2025 RRST-NHK-Project. All rights reserved.
 // #define MODE_ROBOMAS_AD
 // #define MODE_DEBUG
 
+// ================= 役割設定 =================
+// ボードごとにどちらか一方を有効にしてください。
+// - ROLE_MASTER: PCと有線シリアルで接続し、シリアル→CANブリッジを行う（PC側接続ボード）
+// - ROLE_SLAVE: CANを受信してサーボを駆動する（サーボ接続ボード）
+// platformio.ini の build_flags で環境ごとに自動で定義されるので、ここでは設定不要です。
+// 
+// マスターに設定（PC接続ボード）：platformio.ini で -DROLE_MASTER を指定
+// スレイブに設定（サーボ接続ボード）：platformio.ini で -DROLE_SLAVE を指定
+
+// #define ROLE_MASTER
+// #define ROLE_SLAVE
+
 // ================= MD関連 =================
 
 // MD関連の設定，使用するMDに応じて変更
