@@ -20,14 +20,14 @@ bool CanBridge::begin() {
         (gpio_num_t)CAN_RX,
         TWAI_MODE_NORMAL);
 
-    // マスターと一致させるため 500kbps に設定
-    twai_timing_config_t t_config = TWAI_TIMING_CONFIG_500KBITS(); 
+    // マスターと一致させるため 500kbps に設定kら1Mbps へ変更から
+    twai_timing_config_t t_config = TWAI_TIMING_CONFIG_1MBITS(); 
     twai_filter_config_t f_config = TWAI_FILTER_CONFIG_ACCEPT_ALL(); // 全IDを受信
 
     if (twai_driver_install(&g_config, &t_config, &f_config) != ESP_OK) return false;
     if (twai_start() != ESP_OK) return false;
 
-    Serial.println("CAN Slave Initialized (500kbps)");
+    Serial.println("CAN Slave Initialized (1Mbps)");
     return true;
 }
 

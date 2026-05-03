@@ -33,21 +33,15 @@ void setup() {
 
     delay(200);
     delay(100 * DEVICE_ID); // 安定待ち, IDごとに開始タイミングをずらす
+    
+    // ★ 修正ポイント：シリアルモニタが開くのを最大3秒待つ
+    unsigned long start = millis();
+    while (!Serial && (millis() - start < 3000));
+
     Serial.println("--- System Boot Start ---");
 
     pinMode(LED, OUTPUT);
 
-    // CAN初期化[cite: 2]
-    if (CanBridge::begin()) {
-        Serial.println("CAN Init: SUCCESS");
-    } else {
-        Serial.println("CAN Init: FAILED");
-        // 失敗した場合はLEDを点滅させる
-        while(1) {
-            digitalWrite(2, !digitalRead(2));
-            delay(100);
-        }
-    }
 
     // ready
     for (int i = 0; i < 5; i++) {
@@ -197,6 +191,8 @@ void setup() {
 // ================= LOOP =================
 
 void loop() {
+
+    Serial.println("Running...");
 
     vTaskDelay(pdMS_TO_TICKS(10));
     // メインループはなにもしない、処理はすべてFreeRTOSタスクで行う
