@@ -2,11 +2,10 @@
 #include "defs.hpp"
 #include "can_bridge.hpp"
 
-// マスターとして定義
-#define ROLE_MASTER 
+// ROLE selection is defined centrally in config.hpp (or via build flags)
 
 // PC(ROS2)側から送られてくる配列。source: 5 の定義に合わせる
-extern volatile int16_t Rx_16Data[24]; 
+extern volatile int16_t Rx_16Data[24];
 
 bool CanBridge::begin() {
     // マスターはサーボを直接動かさないので attach 不要
@@ -23,7 +22,7 @@ bool CanBridge::begin() {
     if (twai_driver_install(&g_config, &t_config, &f_config) != ESP_OK) return false;
     if (twai_start() != ESP_OK) return false;
     
-    Serial.println("CAN Master Initialized (1Mbps)");
+    Serial.println("CAN Master Initialized (1Mbps)"); //デバッグ用
     return true;
 }
 

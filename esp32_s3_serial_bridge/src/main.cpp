@@ -18,6 +18,7 @@ Copyright (c) 2025 RRST-NHK-Project. All rights reserved.
 #include "serial_task.hpp"
 #include "can_bridge.hpp"
 #include <Arduino.h>
+
 // ================= SETUP =================
 
 void setup() {
@@ -34,7 +35,7 @@ void setup() {
     delay(200);
     delay(100 * DEVICE_ID); // 安定待ち, IDごとに開始タイミングをずらす
     
-    // ★ 修正ポイント：シリアルモニタが開くのを最大3秒待つ
+// ★ 修正ポイント：シリアルモニタが開くのを最大3秒待つ
     unsigned long start = millis();
     while (!Serial && (millis() - start < 3000));
 
@@ -193,7 +194,6 @@ void setup() {
 void loop() {
 
     Serial.println("Running...");
-
     vTaskDelay(pdMS_TO_TICKS(10));
     // メインループはなにもしない、処理はすべてFreeRTOSタスクで行う
 
@@ -205,9 +205,11 @@ void loop() {
             CanBridge::transmitSerialToCan();
             lastSend = millis();
         }
+        printf("Sending CAN message...\n");
 
     #elif defined(ROLE_SLAVE)
         CanBridge::receiveAndDriveServos();
+        printf("Receiving CAN message...\n");
     #endif
 
 }

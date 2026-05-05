@@ -2,8 +2,7 @@
 #include "defs.hpp"
 #include "can_bridge.hpp"
 
-// スレイブとして定義
-#define ROLE_SLAVE 
+// ROLE selection is defined centrally in config.hpp (or via build flags)
 
 Servo CanBridge::servo1;
 Servo CanBridge::servo2;
@@ -35,7 +34,7 @@ void CanBridge::receiveAndDriveServos() {
     twai_message_t msg;
     
     // 20ms タイムアウトで受信を試みる[cite: 4]
-    if (twai_receive(&msg, pdMS_TO_TICKS(20)) == ESP_OK) {
+    if (twai_receive(&msg, pdMS_TO_TICKS(200)) == ESP_OK) {
         
         // マスターが 2バイト (int16) で送っている場合の復元処理
         // msg.data[0] が上位バイト、msg.data[1] が下位バイト[cite: 2]

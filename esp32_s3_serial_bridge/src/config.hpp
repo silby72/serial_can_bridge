@@ -11,7 +11,7 @@ Copyright (c) 2025 RRST-NHK-Project. All rights reserved.
 // ================= 基本設定 =================
 
 // IDの設定，ROS側からマイコンを識別するために使用，すべてのマイコンで異なる値にすること
-#define DEVICE_ID 0x00
+#define DEVICE_ID 0x01
 
 // モードの設定，どれか一つをコメントアウト解除すること
 #define MODE_IO
@@ -28,7 +28,10 @@ Copyright (c) 2025 RRST-NHK-Project. All rights reserved.
 // マスターに設定（PC接続ボード）：platformio.ini で -DROLE_MASTER を指定
 // スレイブに設定（サーボ接続ボード）：platformio.ini で -DROLE_SLAVE を指定
 
-// #define ROLE_MASTER
+// Enable one of the following per-board to select role.
+// For convenience the default here enables ROLE_MASTER so this build acts as the serial->CAN bridge.
+// Change to ROLE_SLAVE (or set build flag -DROLE_SLAVE) for servo/receiver boards.
+#define ROLE_MASTER
 // #define ROLE_SLAVE
 
 // ================= MD関連 =================
