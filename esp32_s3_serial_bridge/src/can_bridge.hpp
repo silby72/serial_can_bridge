@@ -12,6 +12,7 @@ struct ControlPacket {
     uint8_t  id;       // 識別：デバイスID
     int16_t  value;    // 本題：制御値（-32768〜32767）
     uint8_t  checksum; // 安全：データの正しさ確認
+    
 };
 #pragma pack()
 
@@ -23,6 +24,8 @@ public: // ★ここから下は外（main.cpp）から見える
     static void processSerialBuffer(uint8_t* buf);
     static void transmitCan(uint32_t id, uint8_t* data, uint8_t len);
     static void WAI_GENERAL_CONFIG_DEFAULT();
+    static void transmitTestValue(int16_t value);
+    static void receiveAndLogMessages();
 
     static Servo servo1; 
     static Servo servo2;

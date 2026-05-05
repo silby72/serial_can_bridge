@@ -23,26 +23,17 @@ Copyright (c) 2025 RRST-NHK-Project. All rights reserved.
 
 void setup() {
 
-    //以下勝手に追加
-    // 物理的な起動確認
-    pinMode(2, OUTPUT); // ESP32の内蔵LED（ピン番号は基板による）
-    digitalWrite(2, HIGH);
-    //ここまで
-
     // ボーレートは実機テストしながら調整する予定
-    Serial.begin(115200);
+    Serial.begin(20);
 
-    delay(200);
-    delay(100 * DEVICE_ID); // 安定待ち, IDごとに開始タイミングをずらす
+    delay(3000);
+    delay(1000 * DEVICE_ID); // 安定待ち, IDごとに開始タイミングをずらす
     
-// ★ 修正ポイント：シリアルモニタが開くのを最大3秒待つ
-    unsigned long start = millis();
-    while (!Serial && (millis() - start < 3000));
-
+    Serial.println("\n\n");
     Serial.println("--- System Boot Start ---");
+    Serial.flush();
 
     pinMode(LED, OUTPUT);
-
 
     // ready
     for (int i = 0; i < 5; i++) {
@@ -54,20 +45,42 @@ void setup() {
 
     if (!CanBridge::begin()) {
         Serial.println("CAN Init Failed!");
+        Serial.flush();
         while (1);
     }
+
+
+Serial.println("--- SETUP DONE ---");
+Serial.flush();
+delay(2000); // 2秒待ってから loop() に入れる
+
 
     // ledcSetup(1, 20000, 8);
     // ledcAttachPin(LED, 1);
 
 #if defined(ROLE_MASTER)
-    xTaskCreate(
-        serialTask,   // タスク関数
-        "serialTask", // タスク名
-        2048,         // スタックサイズ（words）
-        NULL,
-        10, // 優先度
-        NULL);
+    // xTaskCreate(
+    //     serialTask,   // タスク関数
+    //     "serialTask", // タスク名
+    //     2048,         // スタックサイズ（words）
+    //     NULL,
+    //     10, // 優先度
+    //     NULL);
+    static int16_t testValue = 0;
+    static uint32_t lastSend = 0;
+    
+    // ★ 50ms ではなく、2秒(2000ms)に1回だけ送るように変更
+    if (millis() - lastSend > 2000) { 
+        CanBridge::transmitTestValue(testValue); 
+        testValue++;
+        lastSend = millis();
+        
+        // 送信したことをシリアルでも出す
+        Serial.println(">> 送信を試みました");
+    }
+    
+    CanBridge::receiveAndLogMessages();
+
 #endif
 
     // モードに応じた初期化
@@ -92,14 +105,16 @@ void setup() {
     //         NULL);
 
 #if defined(MODE_IO)
+// 一時的にコメントアウト中
     // 入出力モード初期化
-    xTaskCreate(
-        IO_Task,   // タスク関数
-        "IO_Task", // タスク名
-        2048,      // スタックサイズ（words）
-        NULL,
-        11, // 優先度
-        NULL);
+    // xTaskCreate(
+    //     IO_Task,   // タスク関数
+    //     "IO_Task", // タスク名
+    //     2048,      // スタックサイズ（words）
+    //     NULL,
+    //     11, // 優先度
+    //     NULL);
+// ここまで
 
 #elif defined(MODE_ROBOMAS)
     // ロボマスモード初期化
@@ -187,30 +202,34 @@ void setup() {
      defined(MODE_ROBOMAS) + defined(MODE_ROBOMAS_AD) + defined(MODE_DEBUG)) != 1
 #error "Invalid mode configuration. Please define exactly *one mode* in config.hpp."
 #endif
-}
 
+    Serial.println("setupが完了しました。");
+    Serial.flush(); // ★送信完了まで待機[cite: 8]
+}
 // ================= LOOP =================
 
 void loop() {
 
-    Serial.println("Running...");
-    vTaskDelay(pdMS_TO_TICKS(10));
-    // メインループはなにもしない、処理はすべてFreeRTOSタスクで行う
-
-
     #if defined(ROLE_MASTER)
-        // 2. CANへ流す
-        static uint32_t lastSend = 0;
-        if (millis() - lastSend > 20) { // 20ms周期で送信[cite: 5]
-            CanBridge::transmitSerialToCan();
-            lastSend = millis();
-        }
-        printf("Sending CAN message...\n");
+    // マスターの時だけ実行されるコード
+    static int16_t testValue = 0;
+    static uint32_t lastSend = 0;
+    
+    if (millis() - lastSend > 2000) { 
+        CanBridge::transmitTestValue(testValue); 
+        testValue++;
+        lastSend = millis();
+        Serial.println(">> 送信を試みました");
+    }
+    
+    CanBridge::receiveAndLogMessages();
 
-    #elif defined(ROLE_SLAVE)
-        CanBridge::receiveAndDriveServos();
-        printf("Receiving CAN message...\n");
-    #endif
+#elif defined(ROLE_SLAVE)
+    // スレーブの時だけ実行されるコード
+    // スレーブ側の .cpp に定義されている関数だけを呼ぶ
+    CanBridge::receiveAndDriveServos(); 
+    // 必要ならここにデバッグログを追加
+    Serial.println("Slave mode: Waiting for CAN..."); 
+#endif
 
 }
-

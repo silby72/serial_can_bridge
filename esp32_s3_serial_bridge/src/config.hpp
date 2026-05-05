@@ -31,8 +31,8 @@ Copyright (c) 2025 RRST-NHK-Project. All rights reserved.
 // Enable one of the following per-board to select role.
 // For convenience the default here enables ROLE_MASTER so this build acts as the serial->CAN bridge.
 // Change to ROLE_SLAVE (or set build flag -DROLE_SLAVE) for servo/receiver boards.
-#define ROLE_MASTER
-// #define ROLE_SLAVE
+//#define ROLE_MASTER
+ #define ROLE_SLAVE
 
 // ================= MD関連 =================
 

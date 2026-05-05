@@ -69,8 +69,8 @@ Copyright (c) 2025 RRST-NHK-Project. All rights reserved.
 #define motor 2
 
 // ロボマス
-#define CAN_RX 2
-#define CAN_TX 3
+#define CAN_RX 4
+#define CAN_TX 5
 
 // MD用
 #define MD_PWM_MAX ((1 << MD_PWM_RESOLUTION) - 1)
