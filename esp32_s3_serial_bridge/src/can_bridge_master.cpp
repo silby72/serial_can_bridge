@@ -2,20 +2,17 @@
 #include "defs.hpp"
 #include "can_bridge.hpp"
 
-// ROLE selection is defined centrally in config.hpp (or via build flags)
 
-// PC(ROS2)側から送られてくる配列。source: 5 の定義に合わせる
+// PC(ROS2)側から送られてくる配列
 extern volatile int16_t Rx_16Data[24];
 
 bool CanBridge::begin() {
-    // マスターはサーボを直接動かさないので attach 不要
     
     twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT(
         (gpio_num_t)CAN_TX,
         (gpio_num_t)CAN_RX,
         TWAI_MODE_NORMAL);
 
-    // source: 3 (Sender) の設定に合わせ 500kbps に統一から1Mbps へ変更
     twai_timing_config_t t_config = TWAI_TIMING_CONFIG_1MBITS();
     twai_filter_config_t f_config = TWAI_FILTER_CONFIG_ACCEPT_ALL();
 
@@ -27,15 +24,12 @@ bool CanBridge::begin() {
 }
 
 void CanBridge::transmitSerialToCan() {
-    // source: 5 の定義に基づき、配列の 9番目と10番目を使用
-    // Rx_16Data[9]  : Servo1
-    // Rx_16Data[10] : Servo2
 
     // 16bitデータを2バイトに分割して送信（安全のため）
     uint8_t d1[2] = { (uint8_t)(Rx_16Data[9] >> 8), (uint8_t)(Rx_16Data[9] & 0xFF) };
     uint8_t d2[2] = { (uint8_t)(Rx_16Data[10] >> 8), (uint8_t)(Rx_16Data[10] & 0xFF) };
 
-    // CANバスへ送信[cite: 2, 3]
+    // CANバスへ送信
     transmitCan(0x201, d1, 2); 
     transmitCan(0x202, d2, 2);
 }
@@ -43,7 +37,7 @@ void CanBridge::transmitSerialToCan() {
 void CanBridge::transmitCan(uint32_t id, uint8_t* data, uint8_t len) {
     twai_message_t msg;
     msg.identifier = id;
-    msg.extd = 0; // 標準ID[cite: 3]
+    msg.extd = 0; // 標準ID
     msg.rtr = 0;  // データフレーム
     msg.data_length_code = len;
     for (int i = 0; i < len; i++) msg.data[i] = data[i];

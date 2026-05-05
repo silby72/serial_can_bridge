@@ -2,14 +2,13 @@
 #include "defs.hpp"
 #include "can_bridge.hpp"
 
-// ROLE selection is defined centrally in config.hpp (or via build flags)
 
 Servo CanBridge::servo1;
 Servo CanBridge::servo2;
 
 bool CanBridge::begin() {
 #if defined(ROLE_SLAVE)
-    // 物理ピンへのアタッチ（ピン番号は config.hpp 等で定義されている想定）
+    // 物理ピンへのアタッチ
     servo1.attach(SERVO1);
     servo2.attach(SERVO2);
 #endif
@@ -19,7 +18,7 @@ bool CanBridge::begin() {
         (gpio_num_t)CAN_RX,
         TWAI_MODE_NORMAL);
 
-    // マスターと一致させるため 500kbps に設定kら1Mbps へ変更から
+
     twai_timing_config_t t_config = TWAI_TIMING_CONFIG_1MBITS(); 
     twai_filter_config_t f_config = TWAI_FILTER_CONFIG_ACCEPT_ALL(); // 全IDを受信
 
@@ -33,22 +32,21 @@ bool CanBridge::begin() {
 void CanBridge::receiveAndDriveServos() {
     twai_message_t msg;
     
-    // 20ms タイムアウトで受信を試みる[cite: 4]
     if (twai_receive(&msg, pdMS_TO_TICKS(200)) == ESP_OK) {
         
         // マスターが 2バイト (int16) で送っている場合の復元処理
         // msg.data[0] が上位バイト、msg.data[1] が下位バイト[cite: 2]
         int16_t value = (msg.data[0] << 8) | msg.data[1];
 
-        // 受信ログを出力（デバッグの要）[cite: 4]
+        // 受信ログを出力（デバッグ用）
         Serial.printf("Received ID: 0x%03X, Value: %d\n", msg.identifier, value);
 
         if (msg.identifier == 0x201) {
-            // サーボ1 (0-180度) に制限して出力[cite: 2]
+            // サーボ1 (0-180度) に制限して出力[
             servo1.write(constrain(value, 0, 180));
         } 
         else if (msg.identifier == 0x202) {
-            // サーボ2 に出力[cite: 2]
+            // サーボ2 に出力
             servo2.write(constrain(value, 0, 180));
         }
     }
