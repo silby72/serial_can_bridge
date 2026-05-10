@@ -1,118 +1,50 @@
 #include "can_bridge.hpp"
+#include "driver/twai.h"
 #include "frame_data.hpp"
+#include "config.hpp"
 
-namespace {
-uint8_t toU8Saturated(int16_t value) {
-    if (value < 0) {
-        return 0;
-    }
-    if (value > 255) {
-        return 255;
-    }
-    return static_cast<uint8_t>(value);
-}
-}
+namespace CanBridge {
 
-// CANドライバの初期化
-bool CanBridge::begin() {
-    twai_general_config_t general_config = TWAI_GENERAL_CONFIG_DEFAULT(
-        CanConfig::PIN_TX, 
-        CanConfig::PIN_RX, 
+bool begin() {
+    twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT(
+        (gpio_num_t)CAN_BRIDGE_TX_PIN, 
+        (gpio_num_t)CAN_BRIDGE_RX_PIN, 
         TWAI_MODE_NORMAL
     );
-    
-    twai_timing_config_t timing_config = TWAI_TIMING_CONFIG_1MBITS();
-    twai_filter_config_t filter_config = TWAI_FILTER_CONFIG_ACCEPT_ALL();
+    twai_timing_config_t t_config = TWAI_TIMING_CONFIG_500KBITS();
+    twai_filter_config_t f_config = TWAI_FILTER_CONFIG_ACCEPT_ALL();
 
-    // ドライバのインストール
-    esp_err_t install_result = twai_driver_install(&general_config, &timing_config, &filter_config);
-    if (install_result != ESP_OK) {
-        return false;
-    }
-
-    // ドライバの開始
-    esp_err_t start_result = twai_start();
-    if (start_result != ESP_OK) {
-        return false;
-    }
-
+    if (twai_driver_install(&g_config, &t_config, &f_config) != ESP_OK) return false;
+    if (twai_start() != ESP_OK) return false;
     return true;
 }
 
-// 司令塔：受信データを各デバイス用関数へ振り分ける。振り分け方は.hppの方を参照。
-void CanBridge::transmitSerialToCan() {
-    // モーター、サーボ、トランジスタの順に処理を実行
-    sendMotorGroup();
-    sendServoGroup();
-    sendTransistorGroup();
+// Master用：シリアルデータをCANへ送信
+void sendDataToBus() {
+    twai_message_t msg;
+    msg.identifier = 0x100; // システム共通のデータID（またはSlaveのID）
+    msg.extd = 0;
+    msg.data_length_code = 4; // 16bit * 2 = 4 bytes
+
+    // Rx_16Data[9], [10] を格納
+    msg.data[0] = (uint8_t)(Rx_16Data[9] >> 8);
+    msg.data[1] = (uint8_t)(Rx_16Data[9] & 0xFF);
+    msg.data[2] = (uint8_t)(Rx_16Data[10] >> 8);
+    msg.data[3] = (uint8_t)(Rx_16Data[10] & 0xFF);
+
+    twai_transmit(&msg, pdMS_TO_TICKS(10));
 }
 
-// モーター指令の送信
-void CanBridge::sendMotorGroup() {
-    uint8_t payload[CanConfig::DEVICE_COUNT] = {0};
-    for (int i = 0; i < CanConfig::DEVICE_COUNT; i = i + 1) {
-        payload[i] = toU8Saturated(Rx_16Data[CanConfig::OFFSET_MOTOR + i]);
-    }
-
-    executeCanTransmit(
-        CanConfig::ID_MOTOR_DRIVERS, 
-        payload,
-        CanConfig::DEVICE_COUNT
-    );
-}
-
-// サーボ指令の送信
-void CanBridge::sendServoGroup() {
-    uint8_t payload[CanConfig::DEVICE_COUNT] = {0};
-    for (int i = 0; i < CanConfig::DEVICE_COUNT; i = i + 1) {
-        payload[i] = toU8Saturated(Rx_16Data[CanConfig::OFFSET_SERVO + i]);
-    }
-
-    executeCanTransmit(
-        CanConfig::ID_SERVOS, 
-        payload,
-        CanConfig::DEVICE_COUNT
-    );
-}
-
-// トランジスタ指令の送信（ビットパッキング処理）
-void CanBridge::sendTransistorGroup() {
-    uint8_t packed_bits = 0x00;
-
-    for (int i = 0; i < CanConfig::TRANSISTOR_COUNT; i = i + 1) {
-        // 各TRの0/1判定
-        int16_t current_tr_value = Rx_16Data[CanConfig::OFFSET_TRANSISTOR + i];
-        
-        if (current_tr_value != 0) {
-            // ビットを立てる
-            packed_bits = packed_bits | (1 << i);
+// Slave用：CANからデータを受信してローカル変数に展開
+void receiveDataFromBus() {
+    twai_message_t msg;
+    // タイムアウト0でノンブロッキング受信
+    if (twai_receive(&msg, 0) == ESP_OK) {
+        if (msg.identifier == 0x100 && msg.data_length_code == 4) {
+            Rx_16Data[9]  = (int16_t)((msg.data[0] << 8) | msg.data[1]);
+            Rx_16Data[10] = (int16_t)((msg.data[2] << 8) | msg.data[3]);
         }
     }
-
-    uint8_t payload[1];
-    payload[0] = packed_bits;
-
-    executeCanTransmit(CanConfig::ID_TRANSISTORS, payload, 1);
 }
 
-// 物理レイヤーへの送信実行
-void CanBridge::executeCanTransmit(uint32_t id, const uint8_t* data, uint8_t length) {
-    if (data == nullptr || length == 0 || length > 8) {
-        return;
-    }
-
-    twai_message_t message;
-    
-    message.identifier = id;
-    message.extd = 0;               // 標準IDを使用
-    message.rtr = 0;                // データフレーム
-    message.data_length_code = length;
-    
-    // データのコピー
-    for (int i = 0; i < length; i = i + 1) {
-        message.data[i] = data[i];
-    }
-
-    // 送信実行（タイムアウト1ms）(短いかもしれない)
-    twai_transmit(&message, pdMS_TO_TICKS(1));
-}
+} // namespace CanBridge

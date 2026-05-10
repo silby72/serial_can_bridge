@@ -8,6 +8,8 @@ Copyright (c) 2025 RRST-NHK-Project. All rights reserved.
 #include "driver/pcnt.h"
 #include "frame_data.hpp"
 #include "pin_ctrl_init.hpp"
+#include "can_bridge.hpp"  
+
 #include <Arduino.h>
 
 constexpr uint32_t CTRL_PERIOD_MS = 5; // ピン更新周期（ミリ秒）
@@ -35,6 +37,9 @@ void Output_Task(void *) {
     Rx_16Data[12] = SERVO4_INIT_DEG;
 
     while (1) {
+
+        CanBridge::receiveDataFromBus();
+
         MD_Output();
         Servo_Output();
         TR_Output();

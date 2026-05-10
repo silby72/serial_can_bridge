@@ -2,18 +2,16 @@
 #include "defs.hpp"
 #include "can_bridge.hpp"
 
+CanBridge canBridge;
+
 bool CanBridge::begin() {
     // 1. 基本設定
     // TWAI_MODE_NO_LOOPBACK: ループバックモードを無効にする
     twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT(
         (gpio_num_t)CAN_TX,
         (gpio_num_t)CAN_RX,
-        TWAI_MODE_NO_ACK
+        TWAI_MODE_NORMAL
     );
-
-    // もし完全に「自分だけで完結（ループバック）」させたい場合は、
-    // 以下のように直接フラグを指定することが必要な場合があります。
-    g_config.mode = TWAI_MODE_NO_ACK;
 
     twai_timing_config_t t_config = TWAI_TIMING_CONFIG_1MBITS();
     twai_filter_config_t f_config = TWAI_FILTER_CONFIG_ACCEPT_ALL();
@@ -21,7 +19,6 @@ bool CanBridge::begin() {
     // 2. ドライバのインストール
     esp_err_t err = twai_driver_install(&g_config, &t_config, &f_config);
     if (err != ESP_OK) {
-        // ここで 0x107 が出たら、すでに別の場所で初期化されています
         Serial.printf("CAN Driver Install Failed! Error: 0x%X\n", err);
         return false;
     }
@@ -38,7 +35,19 @@ bool CanBridge::begin() {
 }
 
 void CanBridge::transmitSerialToCan() {
-    // master の serial bridge は停止中
+// 疎通確認用のダミーデータ（定数）
+    int16_t dummy_servo1 = 1500;
+    int16_t dummy_servo2 = -500;
+
+    // 定数をそのままCANへ送信
+    // ID: 0x201 に dummy_servo1 を、0x202 に dummy_servo2 を送信
+    transmitCan(0x201, (uint8_t*)&dummy_servo1, 2);
+    transmitCan(0x202, (uint8_t*)&dummy_servo2, 2);
+
+    // 送信していることがわかるようにデバッグ表示
+    // 頻繁にログが出過ぎる場合は、メインのloop側で頻度を調整してください
+    Serial.printf("Test Send - ID 0x201: %d, ID 0x202: %d\n", dummy_servo1, dummy_servo2);
+
 }
 
 void CanBridge::transmitTestValue(int16_t value) {

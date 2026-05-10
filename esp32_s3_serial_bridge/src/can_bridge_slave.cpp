@@ -32,7 +32,7 @@ bool CanBridge::begin() {
 void CanBridge::receiveAndDriveServos() {
     twai_message_t msg;
     
-    if (twai_receive(&msg, pdMS_TO_TICKS(200)) == ESP_OK) {
+    if (twai_receive(&msg, pdMS_TO_TICKS(1000)) == ESP_OK) {
         
         // マスターが 2バイト (int16) で送っている場合の復元処理
         // msg.data[0] が上位バイト、msg.data[1] が下位バイト[cite: 2]
@@ -49,5 +49,10 @@ void CanBridge::receiveAndDriveServos() {
             // サーボ2 に出力
             servo2.write(constrain(value, 0, 180));
         }
+    }
+
+    else {
+        // 受信タイムアウト
+        Serial.println("No CAN message received within timeout.");
     }
 }

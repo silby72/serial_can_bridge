@@ -14,10 +14,10 @@ Copyright (c) 2025 RRST-NHK-Project. All rights reserved.
 #define DEVICE_ID 0x01
 
 // モードの設定，どれか一つをコメントアウト解除すること
-#define MODE_IO
+// #define MODE_IO
 // #define MODE_ROBOMAS
 // #define MODE_ROBOMAS_AD
-// #define MODE_DEBUG
+ #define MODE_DEBUG
 
 // ================= 役割設定 =================
 // ボードごとにどちらか一方を有効にしてください。
@@ -31,8 +31,8 @@ Copyright (c) 2025 RRST-NHK-Project. All rights reserved.
 // Enable one of the following per-board to select role.
 // For convenience the default here enables ROLE_MASTER so this build acts as the serial->CAN bridge.
 // Change to ROLE_SLAVE (or set build flag -DROLE_SLAVE) for servo/receiver boards.
-//#define ROLE_MASTER
- #define ROLE_SLAVE
+// #define ROLE_MASTER
+#define ROLE_SLAVE
 
 // ================= MD関連 =================
 

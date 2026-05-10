@@ -17,7 +17,7 @@ struct ControlPacket {
 #pragma pack()
 
 class CanBridge {
-public: // ★ここから下は外（main.cpp）から見える
+public:
     static bool begin();
     static void transmitSerialToCan();
     static void receiveAndDriveServos();

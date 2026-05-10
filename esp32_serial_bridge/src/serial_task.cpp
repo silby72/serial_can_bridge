@@ -236,7 +236,9 @@ void receive_frame() {
                                   rx_buf[i * 2 + 1]);
                 }
 
-                CanBridge::transmitSerialToCan();
+                #ifdef MODE_MASTER 
+                CanBridge::sendDataToBus(); // Masterは受信したデータをCANへ送信
+                #endif
 
 #if ENABLE_LOOPBACK
                 // ===== LOOPBACK =====
