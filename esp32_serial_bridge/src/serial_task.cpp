@@ -154,7 +154,9 @@ void send_frame() {
     //     // ===== LOOPBACK =====
     //     Serial.write(Tx_8Data, sizeof(Tx_8Data));
     // #endif
-    Serial.write(Tx_8Data, sizeof(Tx_8Data));
+
+    //一時的処理
+    //Serial.write(Tx_8Data, sizeof(Tx_8Data));
 }
 
 // ================= RX =================

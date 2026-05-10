@@ -47,27 +47,31 @@ void setup() {
     // ledcSetup(1, 20000, 8);
     // ledcAttachPin(LED, 1);
 
-    xTaskCreate(
-        serialTask,   // タスク関数
-        "serialTask", // タスク名
-        2048,         // スタックサイズ（words）
-        NULL,
-        10, // 優先度
-        NULL);
+    // xTaskCreate(
+    //     serialTask,   // タスク関数
+    //     "serialTask", // タスク名
+    //     2048,         // スタックサイズ（words）
+    //     NULL,
+    //     10, // 優先度
+    //     NULL);
+    // Serial.println("[TASK] serialTask created (prio=10)");
 
 // モードに応じた初期化
 #if defined(MODE_OUTPUT)
     // 出力モード初期化
-    xTaskCreate(
-        Output_Task,   // タスク関数
-        "Output_Task", // タスク名
-        2048,          // スタックサイズ（words）
-        NULL,
-        11, // 優先度
-        NULL);
+    // Serial.println("[MODE] MODE_OUTPUT");
+    // xTaskCreate(
+    //     Output_Task,   // タスク関数
+    //     "Output_Task", // タスク名
+    //     2048,          // スタックサイズ（words）
+    //     NULL,
+    //     11, // 優先度
+    //     NULL);
+    // Serial.println("[TASK] Output_Task created (prio=11)");
 
 #elif defined(MODE_INPUT)
     // 入力モード初期化
+    Serial.println("[MODE] MODE_INPUT");
     xTaskCreate(
         Input_Task,   // タスク関数
         "Input_Task", // タスク名
@@ -75,9 +79,11 @@ void setup() {
         NULL,
         4, // 優先度
         NULL);
+    Serial.println("[TASK] Input_Task created (prio=4)");
 
 #elif defined(MODE_IO)
     // 入出力モード初期化
+    Serial.println("[MODE] MODE_IO");
     xTaskCreate(
         IO_Task,   // タスク関数
         "IO_Task", // タスク名
@@ -85,11 +91,14 @@ void setup() {
         NULL,
         11, // 優先度
         NULL);
+    Serial.println("[TASK] IO_Task created (prio=11)");
 
 #elif defined(MODE_ROBOMAS)
     // ロボマスモード初期化
+    Serial.println("[MODE] MODE_ROBOMAS");
 
     robomas_init();
+    Serial.println("[ROBOMAS] init complete");
 
     xTaskCreate(
         M3508_Task,   // タスク関数
@@ -98,6 +107,7 @@ void setup() {
         NULL,
         9, // 優先度
         NULL);
+    Serial.println("[TASK] M3508_Task created (prio=9)");
 
     xTaskCreate(
         PID_Task,   // タスク関数
@@ -106,11 +116,14 @@ void setup() {
         NULL,
         11, // 優先度
         NULL);
+    Serial.println("[TASK] PID_Task created (prio=11)");
 
 #elif defined(MODE_ROBOMAS_PLUS_OUTPUT)
     // ロボマスモード初期化
+    Serial.println("[MODE] MODE_ROBOMAS_PLUS_OUTPUT");
 
     robomas_init();
+    Serial.println("[ROBOMAS] init complete");
 
     xTaskCreate(
         M3508_Task,   // タスク関数
@@ -119,6 +132,7 @@ void setup() {
         NULL,
         9, // 優先度
         NULL);
+    Serial.println("[TASK] M3508_Task created (prio=9)");
 
     // 出力モード初期化
     xTaskCreate(
@@ -128,10 +142,13 @@ void setup() {
         NULL,
         8, // 優先度
         NULL);
+    Serial.println("[TASK] Output_Task created (prio=8)");
 
 #elif defined(MODE_ROBOMAS_PLUS_INPUT)
+    Serial.println("[MODE] MODE_ROBOMAS_PLUS_INPUT");
 
     robomas_init();
+    Serial.println("[ROBOMAS] init complete");
 
     xTaskCreate(
         M3508_Task,   // タスク関数
@@ -140,6 +157,7 @@ void setup() {
         NULL,
         9, // 優先度
         NULL);
+    Serial.println("[TASK] M3508_Task created (prio=9)");
 
     xTaskCreate(
         Input_Task,   // タスク関数
@@ -148,10 +166,13 @@ void setup() {
         NULL,
         4, // 優先度
         NULL);
+    Serial.println("[TASK] Input_Task created (prio=4)");
 
 #elif defined(MODE_ROBOMAS_PLUS_IO)
+    Serial.println("[MODE] MODE_ROBOMAS_PLUS_IO");
 
     robomas_init();
+    Serial.println("[ROBOMAS] init complete");
 
     xTaskCreate(
         M3508_Task,   // タスク関数
@@ -160,6 +181,7 @@ void setup() {
         NULL,
         9, // 優先度
         NULL);
+    Serial.println("[TASK] M3508_Task created (prio=9)");
 
     xTaskCreate(
         ROBOMAS_IO_Task,   // タスク関数
@@ -168,9 +190,11 @@ void setup() {
         NULL,
         11, // 優先度
         NULL);
+    Serial.println("[TASK] ROBOMAS_IO_Task created (prio=11)");
 
 #elif defined(MODE_DEBUG)
     // デバッグモード初期化
+    Serial.println("[MODE] MODE_DEBUG");
 
     // xTaskCreate(
     //     LED_PWM_Task,   // タスク関数
@@ -195,6 +219,7 @@ void setup() {
         NULL,
         11, // 優先度
         NULL);
+    Serial.println("[TASK] PID_Task created (prio=11)");
 
 #else
 #error "No mode defined. Please define one mode in config.hpp."
@@ -204,6 +229,8 @@ void setup() {
      defined(MODE_ROBOMAS) + defined(MODE_ROBOMAS_PLUS_OUTPUT) + defined(MODE_ROBOMAS_PLUS_INPUT) + defined(MODE_ROBOMAS_PLUS_IO) + defined(MODE_DEBUG)) != 1
 #error "Invalid mode configuration. Please define exactly *one mode* in config.hpp."
 #endif
+
+    Serial.println("[BOOT] setup complete");
 }
 
 // ================= LOOP =================
