@@ -156,7 +156,7 @@ void send_frame() {
     // #endif
 
     //一時的処理
-    //Serial.write(Tx_8Data, sizeof(Tx_8Data));
+    Serial.write(Tx_8Data, sizeof(Tx_8Data));
 }
 
 // ================= RX =================
@@ -233,23 +233,27 @@ void receive_frame() {
                 // ===== int16 デコード =====
                 // 上位・下位で分割されたデータを復元
                 for (int i = 0; i < rx_len / 2; i++) {
-                    Rx_16Data[i] =
-                        (int16_t)((rx_buf[i * 2] << 8) |
-                                  rx_buf[i * 2 + 1]);
+                Rx_16Data[i] = (int16_t)((rx_buf[i * 2] << 8) | rx_buf[i * 2 + 1]);
                 }
 
-                #ifdef MODE_MASTER 
-                CanBridge::sendDataToBus(); // Masterは受信したデータをCANへ送信
-                #endif
+                static uint32_t last_rx_print = 0;
+                if (millis() - last_rx_print > 1000) {
+                    Serial.printf("[Serial RX] Success! Data arrived. Rx_16Data[9] = %d\n", Rx_16Data[9]);
+                    last_rx_print = millis();
+                }
+                else {
+                    // チェックサムエラーやID不一致の場合はフレームを破棄して同期からやり直す
+                    Serial.println("[Serial RX] Checksum error or ID mismatch. Frame discarded.");
+                }
 
-#if ENABLE_LOOPBACK
-                // ===== LOOPBACK =====
-                Serial.write(Rx_raw_frame, Rx_raw_len);
-#endif
-            }
-
-            rx_state = WAIT_START; // 最初の状態に戻す
-            break;
+        // IS_MASTERフラグが立っているならCANへ転送
+        #ifdef IS_MASTER
+            CanBridge::sendDataToBus(); 
+            Serial.println("[CAN] Data sent to bus");
+        #endif
+    }
+    rx_state = WAIT_START; 
+    break;
         }
     }
 }

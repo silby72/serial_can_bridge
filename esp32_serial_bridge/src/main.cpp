@@ -18,6 +18,7 @@ Copyright (c) 2025 RRST-NHK-Project. All rights reserved.
 #include "serial_task.hpp"
 #include <Arduino.h>
 #include "can_bridge.hpp"
+#include "debug_led.hpp"
 // ================= SETUP =================
 
 void setup() {
@@ -29,20 +30,23 @@ void setup() {
     delay(100 * DEVICE_ID); // 安定待ち, IDごとに開始タイミングをずらす
 
     pinMode(LED, OUTPUT);
+    
+    // デバッグLED システムの初期化
+    debug_led_init();
+    debug_flash_short(DEBUG_LED_PIN_1); // 初期化開始を示す
 
     if (!CanBridge::begin()) {
+        // CAN初期化失敗: 長い点灯で3回エラー表示
+        debug_flash_long(DEBUG_LED_PIN_1, 3);
         Serial.println("[CAN] initialization failed");
     } else {
+        // CAN初期化成功: 短い点灯で2回表示
+        debug_flash_short(DEBUG_LED_PIN_1, 2);
         Serial.println("[CAN] initialization success");
     }
 
-    // ready
-    for (int i = 0; i < DEVICE_ID; i++) {
-        digitalWrite(LED, HIGH);
-        delay(50);
-        digitalWrite(LED, LOW);
-        delay(50);
-    }
+    // ready: デバイスIDを点灯数で表示
+    debug_pulse_value(DEBUG_LED_PIN_2, DEVICE_ID);
 
     // ledcSetup(1, 20000, 8);
     // ledcAttachPin(LED, 1);
@@ -59,18 +63,30 @@ void setup() {
 // モードに応じた初期化
 #if defined(MODE_OUTPUT)
     // 出力モード初期化
-    // Serial.println("[MODE] MODE_OUTPUT");
-    // xTaskCreate(
-    //     Output_Task,   // タスク関数
-    //     "Output_Task", // タスク名
-    //     2048,          // スタックサイズ（words）
-    //     NULL,
-    //     11, // 優先度
-    //     NULL);
-    // Serial.println("[TASK] Output_Task created (prio=11)");
+    debug_flash_short(DEBUG_LED_PIN_2, 1); // モード1: OUTPUT
+    Serial.println("[MODE] MODE_OUTPUT");
+    
+    xTaskCreate(
+        serialTask,   // シリアル受信タスク（Masterには必須）
+        "serialTask",
+        4096,         // 余裕を持たせて4096
+        NULL,
+        10, 
+        NULL);
+    Serial.println("[TASK] serialTask created (prio=10)");
+
+    xTaskCreate(
+        Output_Task,   // 出力タスク（SlaveでCAN受信に必須）
+        "Output_Task", 
+        4096,          // こちらも4096へ
+        NULL,
+        11, 
+        NULL);
+    Serial.println("[TASK] Output_Task created (prio=11)");
 
 #elif defined(MODE_INPUT)
     // 入力モード初期化
+    debug_flash_short(DEBUG_LED_PIN_2, 2); // モード2: INPUT
     Serial.println("[MODE] MODE_INPUT");
     xTaskCreate(
         Input_Task,   // タスク関数
@@ -79,10 +95,12 @@ void setup() {
         NULL,
         4, // 優先度
         NULL);
+    debug_flash_short(DEBUG_LED_PIN_3); // タスク作成完了
     Serial.println("[TASK] Input_Task created (prio=4)");
 
 #elif defined(MODE_IO)
     // 入出力モード初期化
+    debug_flash_short(DEBUG_LED_PIN_2, 3); // モード3: IO
     Serial.println("[MODE] MODE_IO");
     xTaskCreate(
         IO_Task,   // タスク関数
@@ -91,13 +109,16 @@ void setup() {
         NULL,
         11, // 優先度
         NULL);
+    debug_flash_short(DEBUG_LED_PIN_3); // タスク作成完了
     Serial.println("[TASK] IO_Task created (prio=11)");
 
 #elif defined(MODE_ROBOMAS)
     // ロボマスモード初期化
+    debug_flash_short(DEBUG_LED_PIN_2, 4); // モード4: ROBOMAS
     Serial.println("[MODE] MODE_ROBOMAS");
 
     robomas_init();
+    debug_flash_short(DEBUG_LED_PIN_3); // ROBOMAS初期化完了
     Serial.println("[ROBOMAS] init complete");
 
     xTaskCreate(
@@ -107,6 +128,7 @@ void setup() {
         NULL,
         9, // 優先度
         NULL);
+    debug_flash_short(DEBUG_LED_PIN_3); // タスク作成完了
     Serial.println("[TASK] M3508_Task created (prio=9)");
 
     xTaskCreate(
@@ -116,13 +138,16 @@ void setup() {
         NULL,
         11, // 優先度
         NULL);
+    debug_flash_short(DEBUG_LED_PIN_3); // タスク作成完了
     Serial.println("[TASK] PID_Task created (prio=11)");
 
 #elif defined(MODE_ROBOMAS_PLUS_OUTPUT)
     // ロボマスモード初期化
+    debug_flash_short(DEBUG_LED_PIN_2, 5); // モード5: ROBOMAS_PLUS_OUTPUT
     Serial.println("[MODE] MODE_ROBOMAS_PLUS_OUTPUT");
 
     robomas_init();
+    debug_flash_short(DEBUG_LED_PIN_3); // ROBOMAS初期化完了
     Serial.println("[ROBOMAS] init complete");
 
     xTaskCreate(
@@ -132,6 +157,7 @@ void setup() {
         NULL,
         9, // 優先度
         NULL);
+    debug_flash_short(DEBUG_LED_PIN_3); // タスク作成完了
     Serial.println("[TASK] M3508_Task created (prio=9)");
 
     // 出力モード初期化
@@ -142,12 +168,15 @@ void setup() {
         NULL,
         8, // 優先度
         NULL);
+    debug_flash_short(DEBUG_LED_PIN_3); // タスク作成完了
     Serial.println("[TASK] Output_Task created (prio=8)");
 
 #elif defined(MODE_ROBOMAS_PLUS_INPUT)
+    debug_flash_short(DEBUG_LED_PIN_2, 6); // モード6: ROBOMAS_PLUS_INPUT
     Serial.println("[MODE] MODE_ROBOMAS_PLUS_INPUT");
 
     robomas_init();
+    debug_flash_short(DEBUG_LED_PIN_3); // ROBOMAS初期化完了
     Serial.println("[ROBOMAS] init complete");
 
     xTaskCreate(
@@ -157,6 +186,7 @@ void setup() {
         NULL,
         9, // 優先度
         NULL);
+    debug_flash_short(DEBUG_LED_PIN_3); // タスク作成完了
     Serial.println("[TASK] M3508_Task created (prio=9)");
 
     xTaskCreate(
@@ -166,12 +196,15 @@ void setup() {
         NULL,
         4, // 優先度
         NULL);
+    debug_flash_short(DEBUG_LED_PIN_3); // タスク作成完了
     Serial.println("[TASK] Input_Task created (prio=4)");
 
 #elif defined(MODE_ROBOMAS_PLUS_IO)
+    debug_flash_short(DEBUG_LED_PIN_2, 7); // モード7: ROBOMAS_PLUS_IO
     Serial.println("[MODE] MODE_ROBOMAS_PLUS_IO");
 
     robomas_init();
+    debug_flash_short(DEBUG_LED_PIN_3); // ROBOMAS初期化完了
     Serial.println("[ROBOMAS] init complete");
 
     xTaskCreate(
@@ -181,6 +214,7 @@ void setup() {
         NULL,
         9, // 優先度
         NULL);
+    debug_flash_short(DEBUG_LED_PIN_3); // タスク作成完了
     Serial.println("[TASK] M3508_Task created (prio=9)");
 
     xTaskCreate(
@@ -190,10 +224,12 @@ void setup() {
         NULL,
         11, // 優先度
         NULL);
+    debug_flash_short(DEBUG_LED_PIN_3); // タスク作成完了
     Serial.println("[TASK] ROBOMAS_IO_Task created (prio=11)");
 
 #elif defined(MODE_DEBUG)
     // デバッグモード初期化
+    debug_flash_short(DEBUG_LED_PIN_2, 8); // モード8: DEBUG
     Serial.println("[MODE] MODE_DEBUG");
 
     // xTaskCreate(
@@ -219,6 +255,7 @@ void setup() {
         NULL,
         11, // 優先度
         NULL);
+    debug_flash_short(DEBUG_LED_PIN_3); // タスク作成完了
     Serial.println("[TASK] PID_Task created (prio=11)");
 
 #else
