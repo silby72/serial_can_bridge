@@ -15,8 +15,8 @@ Copyright (c) 2025 RRST-NHK-Project. All rights reserved.
 #define CAN_BRIDGE_RX_PIN 5
 
 // IDの設定，ROS側からマイコンを識別するために使用，すべてのマイコンで異なる値にすること
-#define DEVICE_ID 0x01 // 0x01, 0x02, 0x03, ...
-#define IS_MASTER
+#define DEVICE_ID 0x02// 0x01, 0x02, 0x03, ...
+// #define IS_MASTER
 
 // モードの設定，どれか一つをコメントアウト解除する
 #define MODE_OUTPUT
