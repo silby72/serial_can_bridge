@@ -204,6 +204,10 @@ void receive_frame() {
             break;
 
         case WAIT_CHECKSUM:
+
+        Serial.printf("[DBG] rx_id=0x%02X device_id=0x%02X chk=%d\n",
+        rx_id, DEVICE_ID, rx_checksum == b);
+
             if (rx_checksum == b && rx_id == DEVICE_ID) { // データが破損していないこと，IDが自機と一致することを確認
 
                 if (ENABLE_LED) {
@@ -235,6 +239,8 @@ void receive_frame() {
                 for (int i = 0; i < rx_len / 2; i++) {
                 Rx_16Data[i] = (int16_t)((rx_buf[i * 2] << 8) | rx_buf[i * 2 + 1]);
                 }
+
+                  Serial.printf("[RX] SERVO1=%d SERVO2=%d\n", Rx_16Data[9], Rx_16Data[10]);
 
                 static uint32_t last_rx_print = 0;
                 if (millis() - last_rx_print > 1000) {

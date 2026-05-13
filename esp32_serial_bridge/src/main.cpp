@@ -1,168 +1,213 @@
 /*====================================================================
-<can_test_main.cpp>
-・CAN通信テスト（NORMALモード、Master+Slave両接続）
-・config.hpp で IS_MASTER 定義あり → Master（定数送信）
-・IS_MASTER 未定義               → Slave（受信表示）
+Project: esp32_serial_bridge
+Target board: ESP32 Dev Module
 
-期待される結果:
-  Master: [TX] ID=0x100~0x105  OK:6  NG:0  が繰り返される
-  Slave:  [RX] ID=0x100~0x105 と値が表示される
+Description:
+  ROS 2・マイコン間の通信を行うserial_bridgeパッケージのマイコン側プログラム。
+  PCから送られてくるバイナリデータを受信、デコードしマイコンのGPIO出力に反映させる。
+  config.hppで各種設定をするだけで使用可能です。このファイル(main.cpp)を直接編集しないこと。
 
 Copyright (c) 2025 RRST-NHK-Project. All rights reserved.
 ====================================================================*/
 
+#include "config.hpp"
+#include "defs.hpp"
+#include "pid_task.hpp"
+#include "pin_ctrl_task.hpp"
+#include "robomas.hpp"
+#include "serial_task.hpp"
+#include "can_bridge.hpp"
 #include <Arduino.h>
-#include "driver/twai.h"
+// ================= SETUP =================
 
-// ===== ピン設定 =====
-#define CAN_TX_PIN 4
-#define CAN_RX_PIN 5  // GPIO2は書き込み干渉するためGPIO5を使用
+void setup() {
 
-// ===== CAN設定 =====
-#define BASE_ID        0x100
-#define DATA_PER_FRAME 4
-#define NUM_FRAMES     6
+    // ボーレートは実機テストしながら調整する予定
+    Serial.begin(115200);
 
-// #define IS_MASTER
-
-static const int16_t TEST_DATA[NUM_FRAMES * DATA_PER_FRAME] = {
-    1,   2,   3,   4,
-    5,   6,   7,   8,
-    100, 200, 300, 400,
-    -1,  -2,  -3,  -4,
-    0,   0,   0,   0,
-    999, 0,   0,   0,
-};
-
-// ================================================================
-// 初期化（Master / Slave 共通、両方NORMALモード）
-// ================================================================
-bool can_init() {
-    twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT(
-        (gpio_num_t)CAN_TX_PIN,
-        (gpio_num_t)CAN_RX_PIN,
-        TWAI_MODE_NORMAL
-    );
-    twai_timing_config_t  t_config = TWAI_TIMING_CONFIG_500KBITS();
-    twai_filter_config_t  f_config = TWAI_FILTER_CONFIG_ACCEPT_ALL();
-
-    if (twai_driver_install(&g_config, &t_config, &f_config) != ESP_OK) {
-        Serial.println("[CAN] driver install failed");
-        return false;
-    }
-    if (twai_start() != ESP_OK) {
-        Serial.println("[CAN] start failed");
-        return false;
-    }
-    return true;
-}
-
-// ================================================================
-// バスオフ検出 → 自動リカバリ
-// ================================================================
-// true を返したらその周期は送信しない
-bool check_and_recover() {
-    twai_status_info_t status;
-    twai_get_status_info(&status);
-
-    if (status.state != TWAI_STATE_BUS_OFF) return false;
-
-    Serial.println("[CAN] BUS OFF → restarting...");
-    twai_stop();
-    twai_driver_uninstall();
     delay(200);
-    can_init();
-    Serial.println("[CAN] restarted");
-    return true;
-}
+    delay(100 * DEVICE_ID); // 安定待ち, IDごとに開始タイミングをずらす
 
-// ================================================================
-// Master: 定数を6フレーム送信
-// ================================================================
-#ifdef IS_MASTER
+    pinMode(LED, OUTPUT);
 
-void setup() {
-    Serial.begin(115200);
-    delay(500);
-    Serial.println("[MASTER] boot  (NORMAL mode)");
-    if (!can_init()) { while(1); }
-    Serial.println("[CAN] init OK");
-}
-
-void loop() {
-    if (check_and_recover()) {
-        delay(500);
-        return;
+    // ready
+    for (int i = 0; i < DEVICE_ID; i++) {
+        digitalWrite(LED, HIGH);
+        delay(50);
+        digitalWrite(LED, LOW);
+        delay(50);
     }
 
-    int ok = 0, ng = 0;
+    // ledcSetup(1, 20000, 8);
+    // ledcAttachPin(LED, 1);
 
-    for (uint8_t f = 0; f < NUM_FRAMES; f++) {
-        twai_message_t tx = {};
-        tx.identifier       = BASE_ID + f;
-        tx.extd             = 0;
-        tx.rtr              = 0;
-        tx.data_length_code = 8;
+    xTaskCreate(
+        serialTask,   // タスク関数
+        "serialTask", // タスク名
+        2048,         // スタックサイズ（words）
+        NULL,
+        10, // 優先度
+        NULL);
 
-        for (uint8_t i = 0; i < DATA_PER_FRAME; i++) {
-            int16_t val = TEST_DATA[f * DATA_PER_FRAME + i];
-            tx.data[i * 2]     = (uint8_t)(val >> 8);
-            tx.data[i * 2 + 1] = (uint8_t)(val & 0xFF);
-        }
+// モードに応じた初期化
+#if defined(MODE_MASTER)
+    // Masterモード: シリアル受信 → CAN転送のみ
+    // serialTaskが受信完了時にCanBridge::sendDataToBus()を呼ぶ
+    Serial.println("[MODE] MODE_MASTER");
 
-        delay(5); // フレーム間に少し待つ（バッファ溢れ防止）
+#elif defined(MODE_OUTPUT)
+    // 出力モード初期化
+    xTaskCreate(
+        Output_Task,   // タスク関数
+        "Output_Task", // タスク名
+        2048,          // スタックサイズ（words）
+        NULL,
+        11, // 優先度
+        NULL);
 
-        esp_err_t err = twai_transmit(&tx, pdMS_TO_TICKS(50));
-        if (err == ESP_OK) {
-            Serial.printf("[TX] ID=0x%03X  OK   data: %6d %6d %6d %6d\n",
-                tx.identifier,
-                TEST_DATA[f * DATA_PER_FRAME + 0],
-                TEST_DATA[f * DATA_PER_FRAME + 1],
-                TEST_DATA[f * DATA_PER_FRAME + 2],
-                TEST_DATA[f * DATA_PER_FRAME + 3]);
-            ok++;
-        } else {
-            Serial.printf("[TX] ID=0x%03X  FAILED (err=%d)\n", tx.identifier, err);
-            ng++;
-        }
-    }
+#elif defined(MODE_INPUT)
+    // 入力モード初期化
+    xTaskCreate(
+        Input_Task,   // タスク関数
+        "Input_Task", // タスク名
+        1024,         // スタックサイズ（words）
+        NULL,
+        4, // 優先度
+        NULL);
 
-    Serial.printf("--- OK:%d  NG:%d\n\n", ok, ng);
-    delay(1000);
-}
+#elif defined(MODE_IO)
+    // 入出力モード初期化
+    xTaskCreate(
+        IO_Task,   // タスク関数
+        "IO_Task", // タスク名
+        2048,      // スタックサイズ（words）
+        NULL,
+        11, // 優先度
+        NULL);
 
-// ================================================================
-// Slave: 受信してシリアルに表示
-// ================================================================
+#elif defined(MODE_ROBOMAS)
+    // ロボマスモード初期化
+
+    robomas_init();
+
+    xTaskCreate(
+        M3508_Task,   // タスク関数
+        "M3508_Task", // タスク名
+        2048,         // スタックサイズ（words）
+        NULL,
+        9, // 優先度
+        NULL);
+
+    xTaskCreate(
+        PID_Task,   // タスク関数
+        "PID_Task", // タスク名
+        2048,       // スタックサイズ（words）
+        NULL,
+        11, // 優先度
+        NULL);
+
+#elif defined(MODE_ROBOMAS_PLUS_OUTPUT)
+    // ロボマスモード初期化
+
+    robomas_init();
+
+    xTaskCreate(
+        M3508_Task,   // タスク関数
+        "M3508_Task", // タスク名
+        2048,         // スタックサイズ（words）
+        NULL,
+        9, // 優先度
+        NULL);
+
+    // 出力モード初期化
+    xTaskCreate(
+        Output_Task,   // タスク関数
+        "Output_Task", // タスク名
+        2048,          // スタックサイズ（words）
+        NULL,
+        8, // 優先度
+        NULL);
+
+#elif defined(MODE_ROBOMAS_PLUS_INPUT)
+
+    robomas_init();
+
+    xTaskCreate(
+        M3508_Task,   // タスク関数
+        "M3508_Task", // タスク名
+        2048,         // スタックサイズ（words）
+        NULL,
+        9, // 優先度
+        NULL);
+
+    xTaskCreate(
+        Input_Task,   // タスク関数
+        "Input_Task", // タスク名
+        1024,         // スタックサイズ（words）
+        NULL,
+        4, // 優先度
+        NULL);
+
+#elif defined(MODE_ROBOMAS_PLUS_IO)
+
+    robomas_init();
+
+    xTaskCreate(
+        M3508_Task,   // タスク関数
+        "M3508_Task", // タスク名
+        2048,         // スタックサイズ（words）
+        NULL,
+        9, // 優先度
+        NULL);
+
+    xTaskCreate(
+        ROBOMAS_IO_Task,   // タスク関数
+        "ROBOMAS_IO_Task", // タスク名
+        2048,              // スタックサイズ（words）
+        NULL,
+        11, // 優先度
+        NULL);
+
+#elif defined(MODE_DEBUG)
+    // デバッグモード初期化
+
+    // xTaskCreate(
+    //     LED_PWM_Task,   // タスク関数
+    //     "LED_PWM_Task", // タスク名
+    //     1024,           // スタックサイズ（words）
+    //     NULL,
+    //     9, // 優先度
+    //     NULL)0;
+
+    // xTaskCreate(
+    //     LED_Blink100_Task,   // タスク関数
+    //     "LED_Blink100_Task", // タスク名
+    //     1024,                // スタックサイズ（words）
+    //     NULL,
+    //     9, // 優先度
+    //     NULL);
+
+    xTaskCreate(
+        PID_Task,   // タスク関数
+        "PID_Task", // タスク名
+        2048,       // スタックサイズ（words）
+        NULL,
+        11, // 優先度
+        NULL);
+
 #else
+#error "No mode defined. Please define one mode in config.hpp."
+#endif
 
-void setup() {
-    Serial.begin(115200);
-    delay(500);
-    Serial.println("[SLAVE] boot  (NORMAL mode)");
-    if (!can_init()) { while(1); }
-    Serial.println("[CAN] init OK");
+#if (defined(MODE_MASTER) + defined(MODE_OUTPUT) + defined(MODE_INPUT) + defined(MODE_IO) + \
+     defined(MODE_ROBOMAS) + defined(MODE_ROBOMAS_PLUS_OUTPUT) + defined(MODE_ROBOMAS_PLUS_INPUT) + defined(MODE_ROBOMAS_PLUS_IO) + defined(MODE_DEBUG)) != 1
+#error "Invalid mode configuration. Please define exactly *one mode* in config.hpp."
+#endif
 }
+
+// ================= LOOP =================
 
 void loop() {
-    check_and_recover();
-
-    twai_message_t rx = {};
-    while (twai_receive(&rx, 0) == ESP_OK) {
-        if (rx.data_length_code < 8) continue;
-        if (rx.identifier < BASE_ID || rx.identifier >= BASE_ID + NUM_FRAMES) continue;
-
-        int16_t vals[DATA_PER_FRAME];
-        for (int i = 0; i < DATA_PER_FRAME; i++) {
-            vals[i] = (int16_t)(
-                ((uint16_t)rx.data[i * 2] << 8) |
-                 (uint16_t)rx.data[i * 2 + 1]
-            );
-        }
-        Serial.printf("[RX] ID=0x%03X  data: %6d %6d %6d %6d\n",
-            rx.identifier, vals[0], vals[1], vals[2], vals[3]);
-    }
-    delay(10);
+    vTaskDelay(pdMS_TO_TICKS(1000));
+    // メインループはなにもしない、処理はすべてFreeRTOSタスクで行う
 }
-
-#endif

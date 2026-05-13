@@ -1,25 +1,38 @@
 /*====================================================================
-<config.h>
-書き込み前にここでIDと動作モードを設定してください．MDやサーボの設定もここで行います．
-MDは基本的に変更不要ですが，サーボは型番、機構に応じて適切に設定する必要があります．
+<config.hpp>
+書き込み前にここでIDと動作モードを設定してください．
+MDやサーボの設定もここで行います．
+
+【書き込み手順】
+  Master: IS_MASTER を定義、DEVICE_ID を 0x01 に設定
+  Slave:  IS_MASTER をコメントアウト、DEVICE_ID を 0x02 以降に設定
+
 Copyright (c) 2025 RRST-NHK-Project. All rights reserved.
 ====================================================================*/
 
 #pragma once
 #include <Arduino.h>
 
-// ================= 基本設定 =================
+// ================= Master / Slave 切り替え =================
 
-// CANブリッジ設定（PC-マイコン間シリアルはそのまま、マイコン-アクチュエータ間をCAN化）
-#define CAN_BRIDGE_TX_PIN 4
-#define CAN_BRIDGE_RX_PIN 5
-
-// IDの設定，ROS側からマイコンを識別するために使用，すべてのマイコンで異なる値にすること
-#define DEVICE_ID 0x02// 0x01, 0x02, 0x03, ...
+// Master に書き込む場合 → IS_MASTER を有効にする
+// Slave  に書き込む場合 → IS_MASTER をコメントアウトする
 // #define IS_MASTER
 
-// モードの設定，どれか一つをコメントアウト解除する
-#define MODE_OUTPUT
+// ================= 基本設定 =================
+
+#define CAN_BRIDGE_TX_PIN 4
+#define CAN_BRIDGE_RX_PIN 5  // GPIO2は書き込み時に干渉するためGPIO5を使用
+
+#ifdef IS_MASTER
+    #define DEVICE_ID 0x01
+    #define MODE_MASTER  // シリアル受信 → CAN転送のみ（serial_task.cppの#ifdef MODE_MASTERブロックでsendDataToBus()が呼ばれる）
+#else
+    #define DEVICE_ID 0x02
+    #define MODE_OUTPUT  // SlaveはCANから受け取った値でサーボ・MDを制御
+#endif
+
+// 上記以外のモードを使う場合は IS_MASTER ブロックを無視して直接定義する
 // #define MODE_INPUT
 // #define MODE_IO
 // #define MODE_ROBOMAS
@@ -30,17 +43,14 @@ Copyright (c) 2025 RRST-NHK-Project. All rights reserved.
 
 // ================= MD関連 =================
 
-// MD関連の設定，使用するMDに応じて変更
-#define MD_PWM_FREQ 20000   // MDのPWM周波数（Hz）
-#define MD_PWM_RESOLUTION 8 // MDのPWM分解能（bit）
+#define MD_PWM_FREQ 20000
+#define MD_PWM_RESOLUTION 8
 
 // ================= サーボ関連 =================
 
-// サーボ関連の設定、使用するサーボに応じて変更
-#define SERVO_PWM_FREQ 50       // サーボPWM周波数（Hz）
-#define SERVO_PWM_RESOLUTION 14 // サーボPWM分解能（bit）14ビット推奨
+#define SERVO_PWM_FREQ 50
+#define SERVO_PWM_RESOLUTION 14
 
-// サーボの最小・最大パルス幅、角度範囲、初期角度の設定
 #define SERVO1_MIN_US 500
 #define SERVO1_MAX_US 2500
 #define SERVO1_MIN_DEG 0
@@ -67,6 +77,5 @@ Copyright (c) 2025 RRST-NHK-Project. All rights reserved.
 
 // ================= 高度な設定（通常は変更不要） =================
 
-// 以下の設定は必要に応じて変更
-#define ENABLE_LED 1          // 状態表示LEDを有効にする場合1に設定
-#define ENABLE_EXTRA_TR_PIN 0 // TR6,TR7を有効にする場合1に設定、サーボとのピン競合に注意
+#define ENABLE_LED 1
+#define ENABLE_EXTRA_TR_PIN 0

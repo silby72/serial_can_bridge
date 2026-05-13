@@ -40,6 +40,13 @@ void Output_Task(void *) {
 
         CanBridge::receiveDataFromBus();
 
+                static uint32_t last_print = 0;
+        if (millis() - last_print > 1000) {
+            Serial.printf("[SLAVE] SERVO1=%d SERVO2=%d\n",
+                Rx_16Data[9], Rx_16Data[10]);
+            last_print = millis();
+        }
+
         MD_Output();
         Servo_Output();
         TR_Output();

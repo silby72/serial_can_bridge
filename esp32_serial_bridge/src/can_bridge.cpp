@@ -4,11 +4,8 @@
 ・ESP32無印 + MCP2561 を使用
 ・ESP-IDF組み込みTWAIドライバ使用（外部ライブラリ不要）
 
-注意:
-  robomas.cpp でもTWAIドライバを使う MODE_ROBOMAS 等では
-  TWAIドライバが競合するため can_bridge は使用不可。
-  can_bridge は MODE_OUTPUT / MODE_INPUT / MODE_IO 等の
-  Slave側マイコンで使用することを想定している。
+・sendDataToBus() / receiveDataFromBus() の初回呼び出し時に
+  自動で初期化するため main.cpp の改造不要
 
 Copyright (c) 2025 RRST-NHK-Project. All rights reserved.
 ====================================================================*/
@@ -19,9 +16,14 @@ Copyright (c) 2025 RRST-NHK-Project. All rights reserved.
 namespace CanBridge {
 
 // ================================================================
-// 初期化（Master / Slave 共通）
+// 内部状態
 // ================================================================
-bool begin() {
+static bool s_initialized = false;
+
+// ================================================================
+// 内部: TWAIドライバ初期化
+// ================================================================
+static bool twai_init() {
     twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT(
         (gpio_num_t)CAN_BRIDGE_TX_PIN,
         (gpio_num_t)CAN_BRIDGE_RX_PIN,
@@ -31,49 +33,75 @@ bool begin() {
     twai_filter_config_t  f_config = TWAI_FILTER_CONFIG_ACCEPT_ALL();
 
     if (twai_driver_install(&g_config, &t_config, &f_config) != ESP_OK) {
+        Serial.println("[CAN] driver install failed");
         return false;
     }
     if (twai_start() != ESP_OK) {
+        Serial.println("[CAN] start failed");
         return false;
     }
     return true;
 }
 
 // ================================================================
+// 内部: バスオフ検出 → 自動リカバリ
+// ================================================================
+static void recover_if_busoff() {
+    twai_status_info_t status;
+    if (twai_get_status_info(&status) != ESP_OK) return;
+    if (status.state != TWAI_STATE_BUS_OFF) return;
+
+    // ドライバごと再インストール（twai_initiate_recovery後にtwai_startするとassert crashするため）
+    twai_stop();
+    twai_driver_uninstall();
+    delay(100);
+    twai_init();
+}
+
+// ================================================================
+// 公開: 明示的初期化（呼ばなくても自動初期化される）
+// ================================================================
+bool begin() {
+    if (s_initialized) return true;
+    bool ok = twai_init();
+    if (ok) s_initialized = true;
+    return ok;
+}
+
+// ================================================================
 // Master用: Rx_16Data[] → CAN送信
 // ================================================================
 //
-// Rx_16Data[] を DATA_PER_FRAME(4) 個ずつ分割し，
-// フレームID BASE_ID + フレーム番号 で送信する。
-//
-// 例) Rx16NUM=24, DATA_PER_FRAME=4 → 6フレーム送信
-//   ID=0x100: Rx_16Data[ 0~ 3]
-//   ID=0x101: Rx_16Data[ 4~ 7]
-//   ...
-//   ID=0x105: Rx_16Data[20~23]
+// serial_task.cpp の受信完了時（#ifdef MODE_MASTER ブロック）から呼ばれる
+// Rx_16Data[] を DATA_PER_FRAME(4) 個ずつ分割して送信
 //
 // ================================================================
 void sendDataToBus() {
 #ifdef IS_MASTER
+    // 未初期化なら自動初期化
+    if (!s_initialized) {
+        if (!twai_init()) return;
+        s_initialized = true;
+    }
+
+    recover_if_busoff();
+
     for (uint8_t f = 0; f < NUM_FRAMES; f++) {
-        twai_message_t tx;
-        tx.identifier      = BASE_ID + f;
-        tx.extd            = 0; // 標準フレーム
-        tx.rtr             = 0; // データフレーム
-        tx.data_length_code = 8; // 常に8バイト（未使用部は0埋め）
+        twai_message_t tx = {};
+        tx.identifier       = BASE_ID + f;
+        tx.extd             = 0;
+        tx.rtr              = 0;
+        tx.data_length_code = 8;
 
         for (uint8_t i = 0; i < DATA_PER_FRAME; i++) {
             uint8_t idx = f * DATA_PER_FRAME + i;
             int16_t val = (idx < Rx16NUM) ? Rx_16Data[idx] : 0;
-
-            // big-endian で格納
             tx.data[i * 2]     = (uint8_t)(val >> 8);
             tx.data[i * 2 + 1] = (uint8_t)(val & 0xFF);
         }
 
-        // タイムアウト0で即時送信（ブロッキングしない）
-        // 送信失敗は許容（次の周期で再送される）
-        twai_transmit(&tx, 0);
+        // タイムアウト10ms（Slaveが繋がっていればACKが返る）
+        twai_transmit(&tx, pdMS_TO_TICKS(10));
     }
 #endif // IS_MASTER
 }
@@ -82,33 +110,30 @@ void sendDataToBus() {
 // Slave用: CAN受信 → Rx_16Data[] 格納
 // ================================================================
 //
-// 受信バッファを空になるまでポーリングし，
-// 対象IDのフレームを Rx_16Data[] に展開する。
-// タスクのループ先頭で毎回呼ぶ（ノンブロッキング）。
+// pin_ctrl_task.cpp の Output_Task ループ先頭から呼ばれる
+// 受信バッファを空になるまでポーリング（ノンブロッキング）
 //
 // ================================================================
 void receiveDataFromBus() {
 #ifndef IS_MASTER
-    twai_message_t rx;
+    // 未初期化なら自動初期化
+    if (!s_initialized) {
+        if (!twai_init()) return;
+        s_initialized = true;
+    }
 
-    // 受信バッファを全部処理する（タイムアウト0 = ノンブロッキング）
+    recover_if_busoff();
+
+    twai_message_t rx = {};
     while (twai_receive(&rx, 0) == ESP_OK) {
-        // 対象IDの範囲チェック
         if (rx.identifier < BASE_ID ||
-            rx.identifier >= (uint32_t)(BASE_ID + NUM_FRAMES)) {
-            continue;
-        }
-        if (rx.data_length_code < 8) {
-            continue;
-        }
+            rx.identifier >= (uint32_t)(BASE_ID + NUM_FRAMES)) continue;
+        if (rx.data_length_code < 8) continue;
 
         uint8_t f = (uint8_t)(rx.identifier - BASE_ID);
-
         for (uint8_t i = 0; i < DATA_PER_FRAME; i++) {
             uint8_t idx = f * DATA_PER_FRAME + i;
             if (idx >= Rx16NUM) break;
-
-            // big-endian でデコード
             Rx_16Data[idx] = (int16_t)(
                 ((uint16_t)rx.data[i * 2]     << 8) |
                  (uint16_t)rx.data[i * 2 + 1]
