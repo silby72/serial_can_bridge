@@ -1,0 +1,60 @@
+[0.013s] Invoking command in '/home/ubuntu/serial_can_bridge/build/serial_bridge': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/ubuntu/rrst-ros2-ws-nr26/install/webcam_viewer:/home/ubuntu/rrst-ros2-ws-nr26/install/webcam_calibration:/home/ubuntu/rrst-ros2-ws-nr26/install/sdm15_ros2:/home/ubuntu/rrst-ros2-ws-nr26/install/aruco_realsense_tracker:/home/ubuntu/rrst-ros2-ws-nr26/install/r2_diagnostics:/home/ubuntu/rrst-ros2-ws-nr26/install/plane_detection:/home/ubuntu/rrst-ros2-ws-nr26/install/ld19_eight_direction_distance:/home/ubuntu/rrst-ros2-ws-nr26/install/kfs_pkg:/home/ubuntu/rrst-ros2-ws-nr26/install/kfs_detection:/home/ubuntu/rrst-ros2-ws-nr26/install/kfs_cube_identifier:/home/ubuntu/rrst-ros2-ws-nr26/install/gesture_detection:/home/ubuntu/rrst-ros2-ws-nr26/install/cube_detection:/home/ubuntu/rrst-ros2-ws-nr26/install/aruco_tracker:/home/ubuntu/Natsurobo2026/install/natsu_odrive:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake /home/ubuntu/serial_can_bridge -DCMAKE_INSTALL_PREFIX=/home/ubuntu/serial_can_bridge/install/serial_bridge
+[0.101s] -- The C compiler identification is GNU 13.3.0
+[0.175s] -- The CXX compiler identification is GNU 13.3.0
+[0.194s] -- Detecting C compiler ABI info
+[0.285s] -- Detecting C compiler ABI info - done
+[0.293s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.293s] -- Detecting C compile features
+[0.293s] -- Detecting C compile features - done
+[0.304s] -- Detecting CXX compiler ABI info
+[0.402s] -- Detecting CXX compiler ABI info - done
+[0.414s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[0.414s] -- Detecting CXX compile features
+[0.415s] -- Detecting CXX compile features - done
+[0.423s] -- Found rclcpp: 28.1.18 (/opt/ros/jazzy/share/rclcpp/cmake)
+[0.616s] -- Found Python3: /usr/bin/python3 (found version "3.12.3") found components: Interpreter 
+[0.878s] -- Found rosidl_generator_c: 4.6.7 (/opt/ros/jazzy/share/rosidl_generator_c/cmake)
+[0.903s] -- Found rosidl_generator_cpp: 4.6.7 (/opt/ros/jazzy/share/rosidl_generator_cpp/cmake)
+[0.934s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[0.964s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[1.093s] -- Found rmw_implementation_cmake: 7.3.3 (/opt/ros/jazzy/share/rmw_implementation_cmake/cmake)
+[1.102s] -- Found rmw_fastrtps_cpp: 8.4.3 (/opt/ros/jazzy/share/rmw_fastrtps_cpp/cmake)
+[1.215s] -- Found OpenSSL: /usr/lib/x86_64-linux-gnu/libcrypto.so (found version "3.0.13")  
+[1.239s] -- Found FastRTPS: /opt/ros/jazzy/include (Required is at least version "2.13") 
+[1.265s] -- Using RMW implementation 'rmw_fastrtps_cpp' as default
+[1.369s] -- Found std_msgs: 5.3.7 (/opt/ros/jazzy/share/std_msgs/cmake)
+[1.466s] -- Configuring done (1.4s)
+[1.479s] -- Generating done (0.0s)
+[1.485s] -- Build files have been written to: /home/ubuntu/serial_can_bridge/build/serial_bridge
+[1.495s] Invoked command in '/home/ubuntu/serial_can_bridge/build/serial_bridge' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/ubuntu/rrst-ros2-ws-nr26/install/webcam_viewer:/home/ubuntu/rrst-ros2-ws-nr26/install/webcam_calibration:/home/ubuntu/rrst-ros2-ws-nr26/install/sdm15_ros2:/home/ubuntu/rrst-ros2-ws-nr26/install/aruco_realsense_tracker:/home/ubuntu/rrst-ros2-ws-nr26/install/r2_diagnostics:/home/ubuntu/rrst-ros2-ws-nr26/install/plane_detection:/home/ubuntu/rrst-ros2-ws-nr26/install/ld19_eight_direction_distance:/home/ubuntu/rrst-ros2-ws-nr26/install/kfs_pkg:/home/ubuntu/rrst-ros2-ws-nr26/install/kfs_detection:/home/ubuntu/rrst-ros2-ws-nr26/install/kfs_cube_identifier:/home/ubuntu/rrst-ros2-ws-nr26/install/gesture_detection:/home/ubuntu/rrst-ros2-ws-nr26/install/cube_detection:/home/ubuntu/rrst-ros2-ws-nr26/install/aruco_tracker:/home/ubuntu/Natsurobo2026/install/natsu_odrive:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake /home/ubuntu/serial_can_bridge -DCMAKE_INSTALL_PREFIX=/home/ubuntu/serial_can_bridge/install/serial_bridge
+[1.496s] Invoking command in '/home/ubuntu/serial_can_bridge/build/serial_bridge': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/ubuntu/rrst-ros2-ws-nr26/install/webcam_viewer:/home/ubuntu/rrst-ros2-ws-nr26/install/webcam_calibration:/home/ubuntu/rrst-ros2-ws-nr26/install/sdm15_ros2:/home/ubuntu/rrst-ros2-ws-nr26/install/aruco_realsense_tracker:/home/ubuntu/rrst-ros2-ws-nr26/install/r2_diagnostics:/home/ubuntu/rrst-ros2-ws-nr26/install/plane_detection:/home/ubuntu/rrst-ros2-ws-nr26/install/ld19_eight_direction_distance:/home/ubuntu/rrst-ros2-ws-nr26/install/kfs_pkg:/home/ubuntu/rrst-ros2-ws-nr26/install/kfs_detection:/home/ubuntu/rrst-ros2-ws-nr26/install/kfs_cube_identifier:/home/ubuntu/rrst-ros2-ws-nr26/install/gesture_detection:/home/ubuntu/rrst-ros2-ws-nr26/install/cube_detection:/home/ubuntu/rrst-ros2-ws-nr26/install/aruco_tracker:/home/ubuntu/Natsurobo2026/install/natsu_odrive:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --build /home/ubuntu/serial_can_bridge/build/serial_bridge -- -j16 -l16
+[1.550s] [ 50%] Building CXX object CMakeFiles/serial_bridge_node.dir/src/port_scanner.cpp.o
+[1.550s] [ 50%] Building CXX object CMakeFiles/serial_bridge_node.dir/src/bridge_node.cpp.o
+[1.550s] [ 75%] Building CXX object CMakeFiles/serial_bridge_node.dir/src/main.cpp.o
+[8.301s] [100%] Linking CXX executable serial_bridge_node
+[8.577s] [100%] Built target serial_bridge_node
+[8.588s] Invoked command in '/home/ubuntu/serial_can_bridge/build/serial_bridge' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/ubuntu/rrst-ros2-ws-nr26/install/webcam_viewer:/home/ubuntu/rrst-ros2-ws-nr26/install/webcam_calibration:/home/ubuntu/rrst-ros2-ws-nr26/install/sdm15_ros2:/home/ubuntu/rrst-ros2-ws-nr26/install/aruco_realsense_tracker:/home/ubuntu/rrst-ros2-ws-nr26/install/r2_diagnostics:/home/ubuntu/rrst-ros2-ws-nr26/install/plane_detection:/home/ubuntu/rrst-ros2-ws-nr26/install/ld19_eight_direction_distance:/home/ubuntu/rrst-ros2-ws-nr26/install/kfs_pkg:/home/ubuntu/rrst-ros2-ws-nr26/install/kfs_detection:/home/ubuntu/rrst-ros2-ws-nr26/install/kfs_cube_identifier:/home/ubuntu/rrst-ros2-ws-nr26/install/gesture_detection:/home/ubuntu/rrst-ros2-ws-nr26/install/cube_detection:/home/ubuntu/rrst-ros2-ws-nr26/install/aruco_tracker:/home/ubuntu/Natsurobo2026/install/natsu_odrive:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --build /home/ubuntu/serial_can_bridge/build/serial_bridge -- -j16 -l16
+[8.599s] Invoking command in '/home/ubuntu/serial_can_bridge/build/serial_bridge': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/ubuntu/rrst-ros2-ws-nr26/install/webcam_viewer:/home/ubuntu/rrst-ros2-ws-nr26/install/webcam_calibration:/home/ubuntu/rrst-ros2-ws-nr26/install/sdm15_ros2:/home/ubuntu/rrst-ros2-ws-nr26/install/aruco_realsense_tracker:/home/ubuntu/rrst-ros2-ws-nr26/install/r2_diagnostics:/home/ubuntu/rrst-ros2-ws-nr26/install/plane_detection:/home/ubuntu/rrst-ros2-ws-nr26/install/ld19_eight_direction_distance:/home/ubuntu/rrst-ros2-ws-nr26/install/kfs_pkg:/home/ubuntu/rrst-ros2-ws-nr26/install/kfs_detection:/home/ubuntu/rrst-ros2-ws-nr26/install/kfs_cube_identifier:/home/ubuntu/rrst-ros2-ws-nr26/install/gesture_detection:/home/ubuntu/rrst-ros2-ws-nr26/install/cube_detection:/home/ubuntu/rrst-ros2-ws-nr26/install/aruco_tracker:/home/ubuntu/Natsurobo2026/install/natsu_odrive:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --install /home/ubuntu/serial_can_bridge/build/serial_bridge
+[8.607s] -- Install configuration: ""
+[8.608s] -- Installing: /home/ubuntu/serial_can_bridge/install/serial_bridge/lib/serial_bridge/serial_bridge_node
+[8.612s] -- Set non-toolchain portion of runtime path of "/home/ubuntu/serial_can_bridge/install/serial_bridge/lib/serial_bridge/serial_bridge_node" to ""
+[8.613s] -- Installing: /home/ubuntu/serial_can_bridge/install/serial_bridge/share/serial_bridge//config
+[8.613s] -- Installing: /home/ubuntu/serial_can_bridge/install/serial_bridge/share/serial_bridge//config/serial_bridge.yaml
+[8.613s] -- Installing: /home/ubuntu/serial_can_bridge/install/serial_bridge/share/serial_bridge//launch
+[8.613s] -- Installing: /home/ubuntu/serial_can_bridge/install/serial_bridge/share/serial_bridge//launch/serial_bridge.launch.py
+[8.613s] -- Installing: /home/ubuntu/serial_can_bridge/install/serial_bridge/share/ament_index/resource_index/package_run_dependencies/serial_bridge
+[8.613s] -- Installing: /home/ubuntu/serial_can_bridge/install/serial_bridge/share/ament_index/resource_index/parent_prefix_path/serial_bridge
+[8.614s] -- Installing: /home/ubuntu/serial_can_bridge/install/serial_bridge/share/serial_bridge/environment/ament_prefix_path.sh
+[8.614s] -- Installing: /home/ubuntu/serial_can_bridge/install/serial_bridge/share/serial_bridge/environment/ament_prefix_path.dsv
+[8.614s] -- Installing: /home/ubuntu/serial_can_bridge/install/serial_bridge/share/serial_bridge/environment/path.sh
+[8.614s] -- Installing: /home/ubuntu/serial_can_bridge/install/serial_bridge/share/serial_bridge/environment/path.dsv
+[8.614s] -- Installing: /home/ubuntu/serial_can_bridge/install/serial_bridge/share/serial_bridge/local_setup.bash
+[8.614s] -- Installing: /home/ubuntu/serial_can_bridge/install/serial_bridge/share/serial_bridge/local_setup.sh
+[8.614s] -- Installing: /home/ubuntu/serial_can_bridge/install/serial_bridge/share/serial_bridge/local_setup.zsh
+[8.615s] -- Installing: /home/ubuntu/serial_can_bridge/install/serial_bridge/share/serial_bridge/local_setup.dsv
+[8.615s] -- Installing: /home/ubuntu/serial_can_bridge/install/serial_bridge/share/serial_bridge/package.dsv
+[8.615s] -- Installing: /home/ubuntu/serial_can_bridge/install/serial_bridge/share/ament_index/resource_index/packages/serial_bridge
+[8.615s] -- Installing: /home/ubuntu/serial_can_bridge/install/serial_bridge/share/serial_bridge/cmake/serial_bridgeConfig.cmake
+[8.615s] -- Installing: /home/ubuntu/serial_can_bridge/install/serial_bridge/share/serial_bridge/cmake/serial_bridgeConfig-version.cmake
+[8.615s] -- Installing: /home/ubuntu/serial_can_bridge/install/serial_bridge/share/serial_bridge/package.xml
+[8.617s] Invoked command in '/home/ubuntu/serial_can_bridge/build/serial_bridge' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/ubuntu/rrst-ros2-ws-nr26/install/webcam_viewer:/home/ubuntu/rrst-ros2-ws-nr26/install/webcam_calibration:/home/ubuntu/rrst-ros2-ws-nr26/install/sdm15_ros2:/home/ubuntu/rrst-ros2-ws-nr26/install/aruco_realsense_tracker:/home/ubuntu/rrst-ros2-ws-nr26/install/r2_diagnostics:/home/ubuntu/rrst-ros2-ws-nr26/install/plane_detection:/home/ubuntu/rrst-ros2-ws-nr26/install/ld19_eight_direction_distance:/home/ubuntu/rrst-ros2-ws-nr26/install/kfs_pkg:/home/ubuntu/rrst-ros2-ws-nr26/install/kfs_detection:/home/ubuntu/rrst-ros2-ws-nr26/install/kfs_cube_identifier:/home/ubuntu/rrst-ros2-ws-nr26/install/gesture_detection:/home/ubuntu/rrst-ros2-ws-nr26/install/cube_detection:/home/ubuntu/rrst-ros2-ws-nr26/install/aruco_tracker:/home/ubuntu/Natsurobo2026/install/natsu_odrive:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake --install /home/ubuntu/serial_can_bridge/build/serial_bridge

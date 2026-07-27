@@ -38,7 +38,7 @@ void Output_Task(void *) {
 
     while (1) {
 
-        CanBridge::receiveDataFromBus();
+        // CanBridge::receiveDataFromBus(); // CAN不使用時はコメントアウト
 
                 static uint32_t last_print = 0;
         if (millis() - last_print > 1000) {
